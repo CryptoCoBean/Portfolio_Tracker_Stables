@@ -22,7 +22,11 @@ CHAINS = {
                 "decimals": 6,
             },
             "USDT": {
-                "address": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
+                "address": "0xfde4C962512720E773E50422119c2992dADC9B0d",
+                "decimals": 6,
+            },
+            "USDT0": {
+                "address": "0xfde4C962512720E773E50422119c2992dADC9B0d",
                 "decimals": 6,
             },
         },
@@ -38,6 +42,10 @@ CHAINS = {
             },
             "USDT": {
                 "address": "0x55d398326f99059fF775485246999027B3197955",
+                "decimals": 6,
+            },
+            "USDT0": {
+                "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
                 "decimals": 6,
             },
         },
