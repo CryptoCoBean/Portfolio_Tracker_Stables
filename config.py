@@ -13,24 +13,24 @@ CHAINS = {
         },
     },
 
-    "base": {
-        "chainid": 8453,
-        "tokens": {
-            "USDC": {
-                # Native USDC on Base
-                "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                "decimals": 6,
-            },
-            "USDT": {
-                "address": "0xfde4C962512720E773E50422119c2992dADC9B0d",
-                "decimals": 6,
-            },
-            "USDT0": {
-                "address": "0xfde4C962512720E773E50422119c2992dADC9B0d",
-                "decimals": 6,
-            },
-        },
-    },
+    # "base": { # Not availble on Etherscan V2 free api plan
+    #     "chainid": 8453,
+    #     "tokens": {
+    #         "USDC": {
+    #             # Native USDC on Base
+    #             "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    #             "decimals": 6,
+    #         },
+    #         "USDT": {
+    #             "address": "0xfde4C962512720E773E50422119c2992dADC9B0d",
+    #             "decimals": 6,
+    #         },
+    #         "USDT0": {
+    #             "address": "0xfde4C962512720E773E50422119c2992dADC9B0d",
+    #             "decimals": 6,
+    #         },
+    #     },
+    # },
 
     "arbitrum": {
         "chainid": 42161,
@@ -51,19 +51,19 @@ CHAINS = {
         },
     },
 
-    "bsc": {
-        "chainid": 56,
-        "tokens": {
-            "USDC": {
-                "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-                "decimals": 18,  # BSC USDC uses 18 decimals
-            },
-            "USDT": {
-                "address": "0x55d398326f99059fF775485246999027B3197955",
-                "decimals": 18,
-            },
-        },
-    },
+    # "bsc": { # Not availble on Etherscan V2 free api plan
+    #     "chainid": 56,
+    #     "tokens": {
+    #         "USDC": {
+    #             "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+    #             "decimals": 18,  # BSC USDC uses 18 decimals
+    #         },
+    #         "USDT": {
+    #             "address": "0x55d398326f99059fF775485246999027B3197955",
+    #             "decimals": 18,
+    #         },
+    #     },
+    # },
     "hyperevm": {
         "chainid": 999,
         "tokens": {
