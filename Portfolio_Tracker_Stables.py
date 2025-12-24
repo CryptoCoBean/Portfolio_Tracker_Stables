@@ -96,7 +96,7 @@ def etherscan():
             
         # Append one row per wallet
         rows.append({
-            "Name of address": name,
+            "Name": name,
             "USDC balance": total_usdc,
             "USDT balance": total_usdt,
             "USDT0 balance": total_usdt0,
@@ -107,8 +107,63 @@ def etherscan():
 
     return df_EVM
 
+def base_and_bsc(df_EVM):
+    def get_evm_balances(chain_name, rpc_url, token_configs, named_addresses):
+        print(f"--- Fetching {chain_name} Balances ---")
+        
+        def fetch_rpc_balance(wallet_address, token_address, decimals):
+            time.sleep(2)
+            # Standard ERC-20 balanceOf selector
+            function_selector = "0x70a08231"
+            # Pad address to 64 characters
+            clean_addr = wallet_address.lower().replace("0x", "").zfill(64)
+            data = function_selector + clean_addr
+            
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "eth_call",
+                "params": [{"to": token_address, "data": data}, "latest"],
+                "id": 1
+            }
+            
+            try:
+                response = requests.post(rpc_url, json=payload, timeout=10).json()
+                print(response)
+                hex_val = response.get("result", "0x0")
+                if hex_val == "0x": return 0.0
+                return int(hex_val, 16) / (10 ** decimals)
+            except Exception as e:
+                print(f"Error calling {token_address} for {wallet_address}: {e}")
+                return 0.0
+
+        results = []
+
+        for name, address in named_addresses.items():
+            print(f"Processing {name}...")
+            
+            entry = {"Name": name, "Address": address}
+            total_stables = 0.0
+            
+            for symbol, config in token_configs.items():
+                balance = fetch_rpc_balance(address, config["address"], config["decimals"])
+                entry[f"{symbol} balance"] = balance
+                total_stables += balance
+                
+            entry["Total stablecoin balance"] = total_stables
+            results.append(entry)
+
+        return pd.DataFrame(results)
+
+    df_base = get_evm_balances("Base", "https://mainnet.base.org", config.BASE_CONFIG, ps.NAMED_ADDRESSES)
+    df_bsc = get_evm_balances("BSC", "https://bsc-dataseed.binance.org/", config.BSC_CONFIG, ps.NAMED_ADDRESSES)
+
+    dfs = [df_EVM, df_base, df_bsc]
+    combined_df = pd.concat(dfs, ignore_index=True)
+    final_df = combined_df.groupby("Name", sort=False).sum(numeric_only=True).reset_index()
+    return final_df
+
 def hyperliquid_dex():
-    print("Fetching Hyperliquid clearinghouse and spot balances...")
+    print("Fetching Hyperliquid perp and spot balances...")
     url = "https://api.hyperliquid.xyz/info"
 
     def get_user_balances(address):
@@ -158,11 +213,11 @@ def hyperliquid_dex():
         grand_total = total_usdc + total_usdt + total_usdh
 
         results_list.append({
-            "Name of address": name,
-            "USDC Balance": total_usdc,
-            "USDT Balance": total_usdt,
-            "USDH Balance": total_usdh,
-            "Total Stablecoin Balance": grand_total
+            "Name": name,
+            "USDC balance": total_usdc,
+            "USDT balance": total_usdt,
+            "USDH balance": total_usdh,
+            "Total stablecoin balance": grand_total
         })
 
     # Create and return the DataFrame
@@ -207,10 +262,10 @@ def solscan():
             print(f"Error fetching balance for {wallet_address}: {e}")
             return 0.0
 
-    # 1. Create a list to store the data rows
+    # Create a list to store the data rows
     results_list = []
 
-    # 2. Loop through the dictionary
+    # Loop through the dictionary
     for name, address in ps.SOLANA_ADDRESSES.items():
         print(f"Checking {name}...")
         time.sleep(5)
@@ -224,7 +279,7 @@ def solscan():
 
         # Append data to the list
         results_list.append({
-            "Name of address": name,
+            "Name": name,
             "USDC balance": usdc_bal,
             "USDT balance": usdt_bal,
             "USDT0 balance": usdt0_bal,
@@ -242,10 +297,9 @@ def export_to_csv(df_EVM, df_Solana, df_hl):
     print("Data saved successfully to portfolio_balances.csv")
 
 
-df_EVM = etherscan()
+df_EVM_part_1 = etherscan() # Gets all configured chains on the free Etherscan API
+df_EVM = base_and_bsc(df_EVM_part_1) # Gets info from paid etherscan API chains directly from the RPC + combines all EVM balances into 1 df
+df_Solana = solscan() # Gets stable balances from Solana RPC
+df_hl = hyperliquid_dex() # Gets perps and spot stables info on Hypercore
 
-df_Solana = solscan()
-
-df_hl = hyperliquid_dex()
-
-export_to_csv(df_EVM, df_Solana, df_hl)
+export_to_csv(df_EVM, df_Solana, df_hl) # Adds all balances into 1 df and exports to CSV
