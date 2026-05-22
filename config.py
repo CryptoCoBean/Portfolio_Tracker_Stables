@@ -63,6 +63,10 @@ CHAINS = {
                 "address": "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
                 "decimals": 6,
             },
+            "USDTO": {
+                "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+                "decimals": 6,
+            }
         },
     },
 }
