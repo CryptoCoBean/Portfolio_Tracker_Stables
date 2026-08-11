@@ -163,54 +163,81 @@ def base_and_bsc(df_EVM):
     return final_df
 
 def hyperliquid_dex():
-    print("Fetching Hyperliquid perp and spot balances...")
+    print("Fetching Hyperliquid stablecoin balances...")
+
     url = "https://api.hyperliquid.xyz/info"
 
     def get_user_balances(address):
-        # 1. Fetch Perps Clearinghouse State (for Perps USDC)
-        perp_payload = {"type": "clearinghouseState", "user": address}
-        
-        # 2. Fetch Spot Clearinghouse State (for Spot USDC, USDT, USDH)
-        spot_payload = {"type": "spotClearinghouseState", "user": address}
-        
+        # Fetch raw spot/unified token balances
+        spot_payload = {
+            "type": "spotClearinghouseState",
+            "user": address
+        }
+
         try:
-            # Execute both calls
-            perp_resp = requests.post(url, json=perp_payload).json()
-            spot_resp = requests.post(url, json=spot_payload).json()
+            spot_resp = requests.post(
+                url,
+                json=spot_payload,
+                timeout=15
+            )
 
-            # Extract Perps USDC (accountValue includes settled cash + unrealized PnL)
-            perps_usdc = float(perp_resp.get('marginSummary', {}).get('accountValue', 0))
+            spot_resp.raise_for_status()
+            spot_data = spot_resp.json()
 
-            # Initialize spot totals
-            spot_stables = {"USDC": 0.0, "USDT": 0.0, "USDH": 0.0}
-            
-            # Parse spot balances (returns a list of coin objects)
-            for item in spot_resp.get('balances', []):
-                coin_name = item.get('coin')
-                if coin_name in spot_stables:
-                    spot_stables[coin_name] = float(item.get('total', 0))
+            # Initialize raw stablecoin balances
+            stable_balances = {
+                "USDC": 0.0,
+                "USDT": 0.0,
+                "USDH": 0.0
+            }
 
-            return perps_usdc, spot_stables
-            
+            # Parse actual token balances
+            for item in spot_data.get("balances", []):
+                coin_name = item.get("coin")
+
+                if coin_name in stable_balances:
+                    stable_balances[coin_name] = float(
+                        item.get("total", 0)
+                    )
+
+            return stable_balances
+
         except Exception as e:
-            print(f"Error fetching Hyperliquid data for {address}: {e}")
-            return 0.0, {"USDC": 0.0, "USDT": 0.0, "USDH": 0.0}
+            print(
+                f"Error fetching Hyperliquid data for {address}: {e}"
+            )
+
+            return {
+                "USDC": 0.0,
+                "USDT": 0.0,
+                "USDH": 0.0
+            }
 
     results_list = []
 
-    # Assuming ps.HYPERLIQUID_ADDRESSES is your dictionary of {name: address}
+    # ps.HYPERLIQUID_ADDRESSES should be:
+    # {
+    #     "Account 1": "0x...",
+    #     "Account 2": "0x..."
+    # }
+
     for name, address in ps.HYPERLIQUID_ADDRESSES.items():
         print(f"Checking {name}...")
-        
-        perps_usdc, spot_stables = get_user_balances(address)
-        
-        # Sum USDC from both Perps and Spot
-        total_usdc = perps_usdc + spot_stables["USDC"]
-        total_usdt = spot_stables["USDT"]
-        total_usdh = spot_stables["USDH"]
 
-        # Calculate the single final value for the address
-        grand_total = total_usdc + total_usdt + total_usdh
+        stable_balances = get_user_balances(address)
+
+        # Raw token balances only
+        total_usdc = stable_balances["USDC"]
+        total_usdt = stable_balances["USDT"]
+        total_usdh = stable_balances["USDH"]
+
+        # Sum stablecoins without leverage, positions,
+        # unrealized PnL, or collateral valuation
+        grand_total = (
+            total_usdc
+            + total_usdt
+            + total_usdh
+        )
 
         results_list.append({
             "Name": name,
@@ -220,8 +247,9 @@ def hyperliquid_dex():
             "Total stablecoin balance": grand_total
         })
 
-    # Create and return the DataFrame
+    # Create and return DataFrame
     df = pd.DataFrame(results_list)
+
     return df
 
 def solscan():
@@ -291,8 +319,12 @@ def solscan():
     return df_Solana
 
 def export_to_csv(df_EVM, df_Solana, df_hl):
-
     combined_df = pd.concat([df_EVM, df_Solana, df_hl], axis=0, ignore_index=True)
+    totals = combined_df.sum(numeric_only=True) # Create totals row
+    totals["Name"] = "TOTAL" # Add label for the Name column
+
+    # Append totals row to the bottom
+    combined_df = pd.concat([combined_df, pd.DataFrame([totals])],ignore_index=True)
     combined_df.to_csv(ps.portfolio_balances_fp, index=False)
     print("Data saved successfully to portfolio_balances.csv")
 
