@@ -83,3 +83,8 @@ BSC_CONFIG = {
     "USDC": {"address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", "decimals": 18},
     "USDT": {"address": "0x55d398326f99059fF775485246999027B3197955", "decimals": 18},
 }
+
+# Robinhood Chain Token Addresses 
+ROBINHOOD_CONFIG = {
+    "USDG": {"address": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168", "decimals": 6},
+}

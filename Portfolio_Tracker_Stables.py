@@ -107,7 +107,7 @@ def etherscan():
 
     return df_EVM
 
-def base_and_bsc(df_EVM):
+def other_evm(df_EVM):
     def get_evm_balances(chain_name, rpc_url, token_configs, named_addresses):
         print(f"--- Fetching {chain_name} Balances ---")
         
@@ -156,8 +156,9 @@ def base_and_bsc(df_EVM):
 
     df_base = get_evm_balances("Base", "https://mainnet.base.org", config.BASE_CONFIG, ps.NAMED_ADDRESSES)
     df_bsc = get_evm_balances("BSC", "https://bsc-dataseed.binance.org/", config.BSC_CONFIG, ps.NAMED_ADDRESSES)
+    df_robinhood = get_evm_balances("Robinhood", "https://rpc.mainnet.chain.robinhood.com", config.ROBINHOOD_CONFIG, ps.NAMED_ADDRESSES)
 
-    dfs = [df_EVM, df_base, df_bsc]
+    dfs = [df_EVM, df_base, df_bsc, df_robinhood]
     combined_df = pd.concat(dfs, ignore_index=True)
     final_df = combined_df.groupby("Name", sort=False).sum(numeric_only=True).reset_index()
     return final_df
@@ -330,7 +331,7 @@ def export_to_csv(df_EVM, df_Solana, df_hl):
 
 
 df_EVM_part_1 = etherscan() # Gets all configured chains on the free Etherscan API
-df_EVM = base_and_bsc(df_EVM_part_1) # Gets info from paid etherscan API chains directly from the RPC + combines all EVM balances into 1 df
+df_EVM = other_evm(df_EVM_part_1) # Gets info from paid etherscan API chains directly from the RPC + combines all EVM balances into 1 df
 df_Solana = solscan() # Gets stable balances from Solana RPC
 df_hl = hyperliquid_dex() # Gets perps and spot stables info on Hypercore
 
