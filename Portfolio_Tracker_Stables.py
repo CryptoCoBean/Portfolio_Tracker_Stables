@@ -45,8 +45,8 @@ def etherscan():
                     
                     time.sleep(0.5) # Avoid rate limits
 
-                except Exception:
-                    print("API ERROR")
+                except Exception as e:
+                    print("API ERROR: ",e)
                     balance_clean = 0.0
 
                 results[name][chain_name][token_name] = balance_clean
